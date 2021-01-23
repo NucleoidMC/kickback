@@ -38,6 +38,10 @@ public final class KickbackPlugin {
     private void scheduleReconnection(Player player, RegisteredServer returnServer) {
         this.proxy.getScheduler()
                 .buildTask(this, () -> {
+                    if (returnServer.getPlayersConnected().contains(player)) {
+                        return;
+                    }
+
                     player.createConnectionRequest(returnServer).connect().handle((result, throwable) -> {
                         if (result == null || !result.isSuccessful()) {
                             this.scheduleReconnection(player, returnServer);
