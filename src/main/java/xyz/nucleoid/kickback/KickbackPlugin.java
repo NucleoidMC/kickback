@@ -31,20 +31,21 @@ public final class KickbackPlugin {
         KickedFromServerEvent.ServerKickResult result = event.getResult();
 
         if (!event.kickedDuringServerConnect() && result instanceof KickedFromServerEvent.RedirectPlayer) {
-            this.scheduleReconnection(player, fromServer);
+            RegisteredServer redirectServer = ((KickedFromServerEvent.RedirectPlayer) result).getServer();
+            this.scheduleReconnection(player, redirectServer, fromServer);
         }
     }
 
-    private void scheduleReconnection(Player player, RegisteredServer returnServer) {
+    private void scheduleReconnection(Player player, RegisteredServer fallbackServer, RegisteredServer returnServer) {
         this.proxy.getScheduler()
                 .buildTask(this, () -> {
-                    if (returnServer.getPlayersConnected().contains(player)) {
+                    if (returnServer.getPlayersConnected().contains(player) || !fallbackServer.getPlayersConnected().contains(player)) {
                         return;
                     }
 
                     player.createConnectionRequest(returnServer).connect().handle((result, throwable) -> {
                         if (result == null || !result.isSuccessful()) {
-                            this.scheduleReconnection(player, returnServer);
+                            this.scheduleReconnection(player, fallbackServer, returnServer);
                         }
                         return null;
                     });
